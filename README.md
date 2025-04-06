@@ -2,7 +2,7 @@
 
 - 🎓Senior UG @[AiM](https://sdim.sustech.edu.cn/), [SUSTech](https://www.sustech.edu.cn/en/)
 
-![My Skills](https://skillicons.dev/icons?i=python,java,matlab,cpp,ros,docker,linux,ubuntu,arch,git,latex,markdown)
+![My Skills](https://skillicons.dev/icons?i=python,java,matlab,cpp,pytorch,ros,docker,linux,ubuntu,arch,raspberrypi,git,latex,markdown)
 
 <!--
 **Wavelix/wavelix** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
