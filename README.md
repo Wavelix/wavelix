@@ -1,4 +1,8 @@
-## Hi there 👋
+### 👋Hi, this is Wavelix.
+
+- 🎓Senior UG @[AiM](https://sdim.sustech.edu.cn/), [SUSTech](https://www.sustech.edu.cn/en/)
+
+![My Skills](https://skillicons.dev/icons?i=python,java,matlab,cpp,ros,docker,linux,ubuntu,arch,git,latex,markdown)
 
 <!--
 **Wavelix/wavelix** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
