@@ -7,14 +7,15 @@
 <p>
 <img 
   align="center"
+  width=840
   src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=wavelix&theme=radical"
   />
 <img 
-  height=153
+  height=184
   src="https://github-readme-stats.vercel.app/api?username=wavelix&show_icons=true&count_private=true&theme=radical&rank_icon=github"
   />
 <img 
-  height=153
+  height=184
   src="https://github-readme-stats.vercel.app/api/top-langs/?username=wavelix&layout=compact&theme=radical"
   />
 <p>
