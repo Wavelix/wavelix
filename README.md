@@ -4,17 +4,17 @@
 
 ![My Skills](https://skillicons.dev/icons?i=python,java,matlab,cpp,pytorch,ros,ubuntu,arch,raspberrypi,androidstudio,docker,git,latex,markdown)
 
-<!--
-**Wavelix/wavelix** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
-
-Here are some ideas to get you started:
-
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+<p>
+<img 
+  align="center"
+  src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=wavelix&theme=tokyonight"
+  />
+<img 
+  height=153
+  src="https://github-readme-stats.vercel.app/api?username=wavelix&show_icons=true&count_private=true&theme=tokyonight&rank_icon=github"
+  />
+<img 
+  height=153
+  src="https://github-readme-stats.vercel.app/api/top-langs/?username=wavelix&layout=compact&theme=tokyonight"
+  />
+<p>
