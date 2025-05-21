@@ -11,11 +11,11 @@
   src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=wavelix&theme=radical"
   />
 <img 
-  width=52.5%
+  width=51%
   src="https://github-readme-stats.vercel.app/api?username=wavelix&show_icons=true&count_private=true&theme=radical&rank_icon=github"
   />
 <img 
-  width=47%
+  width=46%
   src="https://github-readme-stats.vercel.app/api/top-langs/?username=wavelix&layout=compact&theme=radical"
   />
 <p>
