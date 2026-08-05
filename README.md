@@ -1,21 +1,10 @@
 ### 👋Hi, this is Wavelix.
 
-- 🎓Senior UG @[AiM](https://sdim.sustech.edu.cn/), [SUSTech](https://www.sustech.edu.cn/en/)
+- Master's Student @[AiM](https://sdim.sustech.edu.cn/), [SUSTech](https://www.sustech.edu.cn/en/)
+- B.Eng. in Automation @[AiM](https://sdim.sustech.edu.cn/), [SUSTech](https://www.sustech.edu.cn/en/)
 
-![My Skills](https://skillicons.dev/icons?i=python,java,matlab,pytorch,ros,cpp,cmake,ubuntu,arch,raspberrypi,androidstudio,docker,git,latex,markdown)
+![My Skills](https://skillicons.dev/icons?i=python,matlab,java,ros,ubuntu,raspberrypi,androidstudio,docker,git,vim,vscode,obsidian,latex)
 
-<p>
-<img 
-  align="center"
-  width=100%
-  src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=wavelix&theme=radical"
-  />
-<img 
-  width=51%
-  src="https://github-readme-stats.vercel.app/api?username=wavelix&show_icons=true&count_private=true&theme=radical&rank_icon=github"
-  />
-<img 
-  width=46%
-  src="https://github-readme-stats.vercel.app/api/top-langs/?username=wavelix&layout=compact&theme=radical"
-  />
-<p>
+<p align="center">
+  <img src="./github-metrics.svg" alt="GitHub Metrics">
+</p>
