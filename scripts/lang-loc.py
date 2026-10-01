@@ -6,7 +6,8 @@
   GH_USER        GitHub 用户名（必填）
   GH_TOKEN       Token，用于提高 API 限额；若要包含私有仓库需用 PAT 并设 INCLUDE_PRIVATE=true
   INCLUDE_PRIVATE  "true" 时通过 /user/repos 获取（需 PAT，带 repo 权限）
-  INCLUDE_FORKS    "true" 时包含 fork 仓库（默认不包含）
+  FORKS          fork 仓库的统计方式：mine 只统计 git blame 作者是自己的行（默认），
+                 all 统计整个仓库，none 不统计
   INCLUDE_ARCHIVED "false" 时跳过已归档仓库（默认包含）
   EXCLUDE_LANGS  逗号分隔的不统计语言
   EXCLUDE_REPOS  逗号分隔的不统计仓库名
@@ -18,6 +19,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -27,7 +29,7 @@ from html import escape
 USER = os.environ["GH_USER"]
 TOKEN = os.environ.get("GH_TOKEN", "")
 INCLUDE_PRIVATE = os.environ.get("INCLUDE_PRIVATE", "false").lower() == "true"
-INCLUDE_FORKS = os.environ.get("INCLUDE_FORKS", "false").lower() == "true"
+FORKS = os.environ.get("FORKS", "mine").lower()
 INCLUDE_ARCHIVED = os.environ.get("INCLUDE_ARCHIVED", "true").lower() == "true"
 TOP_N = int(os.environ.get("TOP_N", "8"))
 OUTPUT = os.environ.get("OUTPUT", "lang-loc.svg")
@@ -93,7 +95,7 @@ def list_repos():
         page += 1
     return [
         r for r in repos
-        if (INCLUDE_FORKS or not r["fork"])
+        if (FORKS != "none" or not r["fork"])
         and (INCLUDE_ARCHIVED or not r.get("archived", False))
         and r["name"] not in EXCLUDE_REPOS
     ]
@@ -106,30 +108,85 @@ def clone_url(repo) -> str:
     return url
 
 
-def count_repo(path: str) -> dict:
-    """返回 {语言: [代码行数, 字节数]}。"""
+def cloc_files(path: str) -> list:
+    """返回 [(文件路径, 语言, 代码行数)]，已去掉不统计的语言。"""
     out = subprocess.run(
         ["cloc", "--by-file", "--json", "--quiet", f"--exclude-dir={EXCLUDE_DIRS}", path],
         capture_output=True, text=True,
     ).stdout
     if not out.strip():
-        return {}
-    result: dict = {}
+        return []
+    files = []
     for fname, v in json.loads(out).items():
         if fname in ("header", "SUM") or not isinstance(v, dict):
             continue
         lang = v.get("language")
-        if not lang or lang in EXCLUDE_LANGS:
-            continue
-        lang = LANG_ALIASES.get(lang, lang)
+        if lang and lang not in EXCLUDE_LANGS:
+            files.append((fname, LANG_ALIASES.get(lang, lang), v.get("code", 0)))
+    return files
+
+
+def count_repo(path: str) -> dict:
+    """返回 {语言: [代码行数, 字节数]}。"""
+    result: dict = {}
+    for fname, lang, code in cloc_files(path):
         try:
             size = os.path.getsize(fname)
         except OSError:
             size = 0
         e = result.setdefault(lang, [0, 0])
-        e[0] += v.get("code", 0)
+        e[0] += code
         e[1] += size
     return result
+
+
+def my_emails(repo) -> set:
+    """该仓库中 GitHub 关联到 USER 账号的提交所用的作者邮箱。"""
+    emails, page = set(), 1
+    while True:
+        batch = api(f"https://api.github.com/repos/{repo['full_name']}/commits"
+                    f"?author={USER}&per_page=100&page={page}")
+        if not batch:
+            break
+        emails.update(c["commit"]["author"]["email"].lower() for c in batch)
+        page += 1
+    return emails
+
+
+# cloc 解析 .ipynb 时依赖的结构行，别人写的也要保留，否则自己写的代码单元格识别不出来
+NB_STRUCTURE = re.compile(rb'^\s*("cell_type"|"source"|\])')
+
+
+def keep_my_lines(repo_dir: str, rel: str, emails: set, dest: str) -> bool:
+    """把文件中 git blame 作者属于 emails 的行写到 dest；没有这样的行时返回 False。"""
+    out = subprocess.run(
+        ["git", "-C", repo_dir, "blame", "--line-porcelain", "--", rel], capture_output=True,
+    ).stdout
+    is_nb = rel.endswith(".ipynb")
+    kept, mine, author = [], False, ""
+    for line in out.split(b"\n"):
+        if line.startswith(b"author-mail "):
+            author = line[len(b"author-mail "):].strip().strip(b"<>").decode(errors="replace").lower()
+        elif line.startswith(b"\t"):
+            content = line[1:]
+            if author in emails:
+                kept.append(content)
+                mine = True
+            elif is_nb and NB_STRUCTURE.match(content):
+                kept.append(content)
+    if mine:
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        with open(dest, "wb") as f:
+            f.write(b"\n".join(kept) + b"\n")
+    return mine
+
+
+def count_my_lines(repo_dir: str, emails: set, mirror: str) -> dict:
+    """只统计 git blame 作者是自己的行：把这些行抽到 mirror 目录（保持文件名），再交给 cloc。"""
+    for fname, _, _ in cloc_files(repo_dir):
+        rel = os.path.relpath(fname, repo_dir)
+        keep_my_lines(repo_dir, rel, emails, os.path.join(mirror, rel))
+    return count_repo(mirror) if os.path.isdir(mirror) else {}
 
 
 def collect():
@@ -138,15 +195,24 @@ def collect():
     with tempfile.TemporaryDirectory() as tmp:
         for repo in list_repos():
             dest = os.path.join(tmp, repo["name"])
-            print(f"Cloning {repo['full_name']} ...")
+            only_mine = repo["fork"] and FORKS == "mine"
+            print(f"Cloning {repo['full_name']} ..." + (" (fork, only my lines)" if only_mine else ""))
+            # 只统计自己的行时需要完整历史来做 git blame
+            depth = [] if only_mine else ["--depth", "1"]
             res = subprocess.run(
-                ["git", "clone", "--depth", "1", "--quiet", clone_url(repo), dest],
+                ["git", "clone", *depth, "--quiet", clone_url(repo), dest],
                 capture_output=True,
             )
             if res.returncode != 0:
                 print("  skip (clone failed)")
                 continue
-            counted = count_repo(dest)
+            if only_mine:
+                emails = my_emails(repo)
+                print(f"  {len(emails)} author email(s) linked to {USER}")
+                mirror = os.path.join(tmp, "_mine", repo["name"])
+                counted = count_my_lines(dest, emails, mirror) if emails else {}
+            else:
+                counted = count_repo(dest)
             if counted:
                 repo_count += 1
             for lang, vals in counted.items():
