@@ -1,0 +1,43 @@
+name: Update language LOC stats
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"   # 每周日 UTC 0 点
+  workflow_dispatch:       # 支持手动触发
+  push:                    # 脚本或 workflow 改动后立即重新生成
+    branches: [main]
+    paths:
+      - "scripts/lang-loc.py"
+      - ".github/workflows/lang-loc.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cloc
+        run: sudo apt-get update && sudo apt-get install -y cloc
+
+      - name: Count lines & render SVG
+        env:
+          GH_USER: ${{ github.repository_owner }}
+          # 只统计公开仓库时用默认 GITHUB_TOKEN 即可；
+          # 要包含私有仓库：新建带 repo 权限的 PAT 存为 secrets.LOC_TOKEN，并取消下面两行注释
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GH_TOKEN: ${{ secrets.LOC_TOKEN }}
+          # INCLUDE_PRIVATE: "true"
+          TOP_N: "8"
+          EXCLUDE_REPOS: ""
+        run: python scripts/lang-loc.py
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lang-loc.svg lang-loc-dark.svg
+          git diff --cached --quiet || git commit -m "chore: update language LOC stats"
+          git push
